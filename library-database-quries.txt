@@ -1,0 +1,86 @@
+/* #1- How many copies of the book titled "The Lost Tribe" are owned by the library branch whose name is "Sharpstown"? */
+create procedure lb1
+as
+begin
+select book_copies_no_of_copies from tbl_book b
+inner join tbl_book_copies bc on b.book_BookID=bc.book_copies_BookID
+inner join tbl_library_branch lb on bc.book_copies_BranchID=lb.library_branch_BranchID 
+and book_Title='the Lost Tribe' and library_branch_BranchName='Sharpstown'
+end
+
+exec lb1
+
+
+/* #2- How many copies of the book titled "The Lost Tribe" are owned by each library branch? */
+create procedure pr2
+as
+begin
+select  library_branch_BranchID ,book_copies_No_Of_Copies from tbl_book b
+inner join tbl_book_copies bc on b.book_BookID=bc.book_copies_BookID
+inner join tbl_library_branch lb on bc.book_copies_BranchID=lb.library_branch_BranchID and book_Title='The Lost Tribe'
+group by library_branch_BranchID,book_copies_No_Of_Copies
+end
+
+exec pr2
+
+/* #3- Retrieve the names of all borrowers who do not have any books checked out. */
+create procedure pr3
+as
+begin
+select borrower_borrowername from tbl_borrower tb
+left outer join tbl_book_loans tl on tb.borrower_CardNo=tl.book_loans_CardNo
+where tl.book_loans_CardNo is null
+end
+
+exec pr3
+
+/* #4- For each book that is loaned out from the "Sharpstown" branch and whose DueDate is today, 
+ retrieve the book title, the borrower's name, and the borrower's address.  */
+ 
+ create procedure pr4
+ as
+ begin
+ select book_Title,borrower_BorrowerName,borrower_BorrowerAddress from tbl_book tb
+ inner join tbl_book_loans tl on tb.book_BookID=tl.book_loans_BookID
+ inner join tbl_library_branch tb1 on tl.book_loans_BranchID=tb1.library_branch_BranchID
+inner join tbl_borrower tb2 on tl.book_loans_CardNo=tb2.borrower_CardNo
+where library_branch_BranchName='Sharpstown' and book_loans_DueDate=getdate()
+end
+
+exec pr4
+
+
+/* #5- For each library branch, retrieve the branch name and the total number of books loaned out from that branch.  */
+create procedure pr5
+as 
+begin
+select library_branch_BranchName,count(book_loans_BookID) as totalbooks from tbl_library_branch lb
+inner join tbl_book_loans tl on  lb.library_branch_BranchID=tl.book_loans_BranchID
+group by library_branch_BranchName,library_branch_BranchID
+end
+
+exec pr5
+
+/* #6- Retrieve the names, addresses, and number of books checked out for all borrowers who have more than five books checked out. */
+create procedure pr6
+as
+begin
+select  borrower_BorrowerName,borrower_BorrowerAddress,count(book_loans_bookid) as numberofbooks from tbl_borrower tb
+inner join tbl_book_loans tl on tb.borrower_CardNo=tl.book_loans_CardNo
+group by borrower_CardNo, borrower_BorrowerName,borrower_BorrowerAddress having count(book_loans_bookid)>5
+end
+
+exec  pr6
+
+/* #7- For each book authored by "Stephen King", retrieve the title and the number of copies owned by the library branch whose name is "Central".*/
+create procedure pr7(@authorname varchar(20),@branchname varchar(20))
+as
+begin
+select  book_Title,book_copies_No_Of_Copies from tbl_book_authors ta
+inner join tbl_book_copies tc on ta.book_authors_BookID=tc.book_copies_BookID
+inner join tbl_library_branch tb on tc.book_copies_BranchID=tb.library_branch_BranchID
+inner join tbl_book tb1 on ta.book_authors_BookID=tb1.book_BookID
+and book_authors_AuthorName=@authorname and library_branch_BranchName=@branchname 
+end
+
+exec pr7 'Stephen King','central'
